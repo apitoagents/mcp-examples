@@ -1,0 +1,34 @@
+#!/usr/bin/env sh
+# Atomic commits: the staged changes must belong to one area only.
+#   deps     dependency bumps: modified package manifests and lock files
+#   content  published articles, docs pages, their images
+#   infra    CI, build and deployment configuration, hooks
+#   code     everything else (source, tests, tooling config, and the
+#            manifests of a newly added module)
+# A change that needs two areas is two commits.
+staged=$(git diff --cached --name-status --diff-filter=ACMRD)
+[ -z "$staged" ] && exit 0
+tmp=$(mktemp)
+printf '%s\n' "$staged" | while IFS="$(printf '\t')" read -r status path renamed; do
+  [ -n "$renamed" ] && path=$renamed
+  case "$path" in
+    package.json|package-lock.json|*/package.json|*/package-lock.json|*/composer.json|*/composer.lock|*/requirements.txt|*.csproj)
+      case "$status" in M*) echo deps ;; *) echo code ;; esac ;;
+    src/content/*|public/images/*|docs/blog-drafts/*|docs/blog-illustrations.md)
+      echo content ;;
+    .github/*|cloudbuild*|apphosting.yaml|Dockerfile*|firebase.json|scripts/*|.githooks/*)
+      echo infra ;;
+    *)
+      echo code ;;
+  esac
+done | sort -u > "$tmp"
+count=$(grep -c . "$tmp")
+if [ "$count" -gt 1 ]; then
+  echo "pre-commit: staged changes span several areas ($(tr '\n' ' ' < "$tmp"))." >&2
+  echo "pre-commit: split them so each commit changes one area." >&2
+  printf '%s\n' "$staged" | sed 's/^/  /' >&2
+  rm -f "$tmp"
+  exit 1
+fi
+rm -f "$tmp"
+exit 0

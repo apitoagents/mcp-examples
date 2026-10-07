@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+# Commit message rules: exactly one line, no AI attribution or co-author trailers.
+file="$1"
+# Drop comment lines and trailing blank lines before judging.
+message=$(grep -v '^#' "$file" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}')
+lines=$(printf '%s\n' "$message" | grep -c .)
+if [ "$lines" -ne 1 ]; then
+  echo "commit-msg: the message must be exactly one line (found $lines)." >&2
+  exit 1
+fi
+if [ "${#message}" -gt 100 ]; then
+  echo "commit-msg: keep the line at 100 characters or fewer (${#message})." >&2
+  exit 1
+fi
+if printf '%s' "$message" | grep -qiE 'claude|anthropic|co-authored-by|generated with'; then
+  echo "commit-msg: no assistant attribution or co-author trailers in commit messages." >&2
+  exit 1
+fi
+exit 0
