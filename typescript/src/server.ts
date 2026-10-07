@@ -24,6 +24,29 @@ app.use(express.json({ limit: "1mb" }));
 app.use(hostHeaderValidation(allowedHosts));
 app.all("/mcp", (req, res) => void node(req, res, req.body));
 app.get("/health", (_req, res) => void res.json({ ok: true }));
+// Server card: lets directories (Smithery reads this path) describe the server
+// without connecting. Harmless for clients that never look.
+app.get("/.well-known/mcp/server-card.json", (req, res) =>
+  void res.json({
+    name: "sample-shop",
+    title: "Sample Shop MCP server",
+    version: "1.0.1",
+    description:
+      "Open-source sample shop with a paginated product search, an idempotent order tool and a guarded cancellation. Built by API to Agents to show the three kinds of tool every integration needs.",
+    url: `https://${req.headers.host ?? "demo.apitoagents.com"}/mcp`,
+    transport: "streamable-http",
+    authentication: { schemes: [] },
+    tools: [
+      { name: "search_products", description: "Paginated catalogue search (read-only)." },
+      { name: "get_product", description: "One product by id (read-only)." },
+      { name: "create_order", description: "Place an order; idempotent by key." },
+      { name: "cancel_order", description: "Cancel an order; requires explicit confirmation." },
+    ],
+    documentation: "https://apitoagents.com/docs",
+    source: "https://github.com/apitoagents/mcp-examples",
+    package: "@apitoagents/sample-shop-mcp",
+  }),
+);
 app.get("/", (_req, res) =>
   void res.json({
     name: "sample-shop",
