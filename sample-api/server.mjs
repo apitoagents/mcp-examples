@@ -9,6 +9,9 @@ import { dirname, join } from "node:path";
 const here = dirname(fileURLToPath(import.meta.url));
 const openapi = readFileSync(join(here, "openapi.json"), "utf8");
 const PORT = Number(process.env.PORT ?? 4010);
+const HOST = process.env.HOST ?? "127.0.0.1";
+// Public demo guard: in-memory state must not grow without bound.
+const MAX_ORDERS = 5000;
 const API_KEY = process.env.API_KEY ?? "demo-key";
 
 const products = [
@@ -118,6 +121,10 @@ const server = createServer(async (req, res) => {
     }
     const product = products.find((p) => p.id === productId);
     if (!product) return error(res, 404, "not_found", "No such product.");
+    if (orders.size >= MAX_ORDERS) {
+      orders.clear();
+      idempotency.clear();
+    }
     const order = {
       id: `o-${nextOrder++}`,
       productId,
@@ -152,6 +159,6 @@ const server = createServer(async (req, res) => {
   return error(res, 404, "not_found", "No such route.");
 });
 
-server.listen(PORT, "127.0.0.1", () => {
-  console.log(`Sample Shop API listening on http://127.0.0.1:${PORT} (X-API-Key: ${API_KEY})`);
+server.listen(PORT, HOST, () => {
+  console.log(`Sample Shop API listening on http://${HOST}:${PORT} (X-API-Key: ${API_KEY})`);
 });
