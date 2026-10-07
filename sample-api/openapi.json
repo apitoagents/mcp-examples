@@ -1,0 +1,160 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Sample Shop API",
+    "version": "1.0.0",
+    "description": "A deliberately small e-commerce API used by every example in this repository. It has one search endpoint, one lookup endpoint, one idempotent write, and one consequential action, so that each MCP example can show a read tool, a write tool, and a guarded tool against the same upstream."
+  },
+  "servers": [{ "url": "http://127.0.0.1:4010" }],
+  "security": [{ "ApiKey": [] }],
+  "paths": {
+    "/products": {
+      "get": {
+        "operationId": "searchProducts",
+        "summary": "Search the catalogue",
+        "description": "Full-text search over product names and descriptions. Results are paginated with an opaque cursor.",
+        "parameters": [
+          { "name": "q", "in": "query", "description": "Search phrase matched against name and description.", "schema": { "type": "string" } },
+          { "name": "category", "in": "query", "description": "Restrict to one category.", "schema": { "type": "string", "enum": ["lighting", "furniture", "kitchen"] } },
+          { "name": "limit", "in": "query", "description": "Page size, 1 to 20.", "schema": { "type": "integer", "minimum": 1, "maximum": 20, "default": 5 } },
+          { "name": "cursor", "in": "query", "description": "Opaque continuation token from a previous page.", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "One page of products.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductPage" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/products/{productId}": {
+      "get": {
+        "operationId": "getProduct",
+        "summary": "Get one product",
+        "parameters": [
+          { "name": "productId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "The product.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Product" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/orders": {
+      "post": {
+        "operationId": "createOrder",
+        "summary": "Create an order",
+        "description": "Creates an order for one product. Send an Idempotency-Key header; repeating a request with the same key returns the original order instead of creating a second one.",
+        "parameters": [
+          { "name": "Idempotency-Key", "in": "header", "required": true, "description": "Client-chosen unique key for this order attempt.", "schema": { "type": "string", "minLength": 8, "maxLength": 128 } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NewOrder" } } }
+        },
+        "responses": {
+          "201": { "description": "Order created.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Order" } } } },
+          "200": { "description": "Same Idempotency-Key seen before; the original order is returned.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Order" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "description": "Idempotency-Key reused with a different payload.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/orders/{orderId}": {
+      "get": {
+        "operationId": "getOrder",
+        "summary": "Get one order",
+        "parameters": [
+          { "name": "orderId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "The order.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Order" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/orders/{orderId}/cancel": {
+      "post": {
+        "operationId": "cancelOrder",
+        "summary": "Cancel an order",
+        "description": "Cancels an order that has not shipped. This is irreversible, which is why MCP examples wrap it in a guarded tool that requires explicit confirmation.",
+        "parameters": [
+          { "name": "orderId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Order cancelled.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Order" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "description": "Order already shipped or already cancelled.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKey": { "type": "apiKey", "in": "header", "name": "X-API-Key" }
+    },
+    "responses": {
+      "BadRequest": { "description": "Invalid input.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Unauthorized": { "description": "Missing or wrong API key.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "NotFound": { "description": "No such record.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+    },
+    "schemas": {
+      "Product": {
+        "type": "object",
+        "required": ["id", "name", "category", "priceCents", "currency", "inStock"],
+        "properties": {
+          "id": { "type": "string", "examples": ["p-1001"] },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "category": { "type": "string", "enum": ["lighting", "furniture", "kitchen"] },
+          "priceCents": { "type": "integer", "minimum": 0 },
+          "currency": { "type": "string", "const": "USD" },
+          "inStock": { "type": "boolean" }
+        }
+      },
+      "ProductPage": {
+        "type": "object",
+        "required": ["items", "nextCursor"],
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/Product" } },
+          "nextCursor": { "type": ["string", "null"], "description": "Pass as cursor to fetch the next page; null means this was the last page." }
+        }
+      },
+      "NewOrder": {
+        "type": "object",
+        "required": ["productId", "quantity"],
+        "properties": {
+          "productId": { "type": "string" },
+          "quantity": { "type": "integer", "minimum": 1, "maximum": 10 }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "required": ["id", "productId", "quantity", "status", "totalCents", "currency"],
+        "properties": {
+          "id": { "type": "string", "examples": ["o-5001"] },
+          "productId": { "type": "string" },
+          "quantity": { "type": "integer" },
+          "status": { "type": "string", "enum": ["placed", "shipped", "cancelled"] },
+          "totalCents": { "type": "integer" },
+          "currency": { "type": "string", "const": "USD" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": { "type": "string", "enum": ["invalid_input", "unauthorized", "not_found", "idempotency_conflict", "order_not_cancellable"] },
+          "message": { "type": "string" }
+        }
+      }
+    }
+  }
+}
