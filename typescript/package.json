@@ -1,15 +1,42 @@
 {
-  "name": "sample-shop-mcp-typescript",
+  "name": "@apitoagents/sample-shop-mcp",
   "version": "1.0.0",
-  "private": true,
+  "description": "MCP server exposing a sample shop API to ChatGPT, Claude and other agents: paginated search, idempotent orders, guarded cancellation. Official TypeScript SDK.",
+  "mcpName": "io.github.apitoagents/sample-shop-mcp",
+  "license": "MIT",
   "type": "module",
-  "description": "MCP server exposing the Sample Shop API to AI agents over Streamable HTTP, written with the official TypeScript SDK.",
+  "bin": {
+    "sample-shop-mcp": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "sample-api",
+    "README.md"
+  ],
   "engines": {
     "node": ">=20"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apitoagents/mcp-examples.git",
+    "directory": "typescript"
+  },
+  "homepage": "https://apitoagents.com/docs/build-mcp-server-typescript",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "mcp-server",
+    "streamable-http",
+    "ecommerce",
+    "example"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node scripts/bundle-sample-api.mjs",
     "start": "node dist/server.js",
+    "stdio": "node dist/cli.js",
     "dev": "node --experimental-strip-types src/server.ts"
   },
   "dependencies": {
