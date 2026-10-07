@@ -18,3 +18,6 @@ vendor/
 # Local
 .env
 .DS_Store
+
+# Build output copied into the package by typescript/scripts/bundle-sample-api.mjs
+typescript/sample-api/

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.apitoagents/sample-shop-mcp",
+  "description": "Sample shop MCP server: paginated search, idempotent orders, guarded cancellation. Four languages.",
+  "title": "Sample Shop MCP server",
+  "version": "1.0.0",
+  "websiteUrl": "https://apitoagents.com/docs",
+  "repository": {
+    "url": "https://github.com/apitoagents/mcp-examples",
+    "source": "github",
+    "subfolder": "typescript"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "@apitoagents/sample-shop-mcp",
+      "version": "1.0.0",
+      "runtimeHint": "npx",
+      "transport": { "type": "stdio" }
+    }
+  ],
+  "remotes": [
+    { "type": "streamable-http", "url": "https://demo.apitoagents.com/mcp" }
+  ]
+}

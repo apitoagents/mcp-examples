@@ -1,0 +1,14 @@
+**/node_modules
+**/dist
+**/.venv
+**/bin
+**/obj
+**/vendor
+.git
+.github
+tests
+python
+csharp
+php
+docs
+typescript/sample-api
