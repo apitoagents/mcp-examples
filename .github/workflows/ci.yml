@@ -1,0 +1,88 @@
+name: Conformance
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Every job starts the Sample Shop API, starts one language's MCP server, and
+# runs the same conformance scenario against it. A green matrix means the four
+# servers expose one identical tool interface.
+jobs:
+  typescript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node sample-api/server.mjs &
+      - run: npm ci && npm run build
+        working-directory: typescript
+      - run: npm start &
+        working-directory: typescript
+      - run: npm ci
+        working-directory: tests
+      - run: ./tests/wait-for.sh http://127.0.0.1:3001/health
+      - run: MCP_URL=http://127.0.0.1:3001/mcp npm test
+        working-directory: tests
+
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: node sample-api/server.mjs &
+      - run: pip install -r requirements.txt
+        working-directory: python
+      - run: python server.py &
+        working-directory: python
+      - run: npm ci
+        working-directory: tests
+      - run: ./tests/wait-for.sh http://127.0.0.1:3002/health
+      - run: MCP_URL=http://127.0.0.1:3002/mcp npm test
+        working-directory: tests
+
+  csharp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: "10.0.x" }
+      - run: node sample-api/server.mjs &
+      - run: dotnet build -c Release
+        working-directory: csharp
+      - run: dotnet run -c Release --no-build &
+        working-directory: csharp
+      - run: npm ci
+        working-directory: tests
+      - run: ./tests/wait-for.sh http://127.0.0.1:3003/health
+      - run: MCP_URL=http://127.0.0.1:3003/mcp npm test
+        working-directory: tests
+
+  php:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: "8.3" }
+      - run: node sample-api/server.mjs &
+      - run: composer install --no-interaction --no-progress
+        working-directory: php
+      - run: php -S 127.0.0.1:3004 public/index.php &
+        working-directory: php
+      - run: npm ci
+        working-directory: tests
+      - run: ./tests/wait-for.sh http://127.0.0.1:3004/health
+      - run: MCP_URL=http://127.0.0.1:3004/mcp npm test
+        working-directory: tests
