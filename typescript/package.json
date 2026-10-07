@@ -1,6 +1,6 @@
 {
   "name": "@apitoagents/sample-shop-mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP server exposing a sample shop API to ChatGPT, Claude and other agents: paginated search, idempotent orders, guarded cancellation. Official TypeScript SDK.",
   "mcpName": "io.github.apitoagents/sample-shop-mcp",
   "license": "MIT",
