@@ -1,0 +1,14 @@
+{
+  "name": "sample-shop-mcp-conformance",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Connects to any of the example MCP servers and runs the same scenario against each.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node conformance.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/client": "2.3.1"
+  }
+}
