@@ -21,6 +21,8 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
+      # Trusted publishing (OIDC) needs npm 11.5+; the runner's Node 22 ships npm 10.
+      - run: npm install -g npm@latest && npm --version
       - run: npm ci && npm run build
         working-directory: typescript
       - run: node -e "const v=require('./package.json').version; if ('v'+v!==process.env.TAG) { console.error('package.json version', v, 'does not match tag', process.env.TAG); process.exit(1) }"
