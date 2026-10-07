@@ -1,0 +1,25 @@
+{
+  "name": "apitoagents/sample-shop-mcp-php",
+  "description": "MCP server exposing the Sample Shop API to AI agents over Streamable HTTP, written with the official PHP SDK.",
+  "type": "project",
+  "license": "MIT",
+  "require": {
+    "php": "^8.2",
+    "laminas/laminas-httphandlerrunner": "^2.11",
+    "mcp/sdk": "0.8.1",
+    "nyholm/psr7": "^1.8",
+    "nyholm/psr7-server": "^1.1",
+    "php-http/discovery": "^1.20",
+    "symfony/finder": "^7.0"
+  },
+  "autoload": {
+    "psr-4": { "SampleShop\\": "src/" }
+  },
+  "config": {
+    "allow-plugins": { "php-http/discovery": true },
+    "sort-packages": true,
+    "platform": {
+      "php": "8.2.0"
+    }
+  }
+}
