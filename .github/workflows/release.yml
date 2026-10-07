@@ -1,0 +1,30 @@
+name: Publish to npm
+
+# Publishes @apitoagents/sample-shop-mcp when a tag like v1.0.0 is pushed.
+# Uses npm trusted publishing (OIDC): no token is stored anywhere. The npm
+# package settings must list this repository and workflow as a trusted
+# publisher first.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - run: npm ci && npm run build
+        working-directory: typescript
+      - run: node -e "const v=require('./package.json').version; if ('v'+v!==process.env.TAG) { console.error('package.json version', v, 'does not match tag', process.env.TAG); process.exit(1) }"
+        working-directory: typescript
+        env: { TAG: "${{ github.ref_name }}" }
+      - run: npm publish --provenance --access public
+        working-directory: typescript
